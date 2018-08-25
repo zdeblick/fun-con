@@ -34,26 +34,6 @@ def GLM_network_fit(stimulus,spikes,d_stim, d_spk,link='log',priors=None,L1=None
 
 
 
-# Inputs
-# flat_stimulus: M x T matrix of stimuli
-# binned_spikes: N x T matrix of spike counts
-# i: index of the neuron we're constructing the matrix for
-# d_stim: duration of stimulus filter (# time bins)
-# d_spk: duration of spike filters (# time bins)
-def construct_GLM_mat(flat_stimulus, binned_spikes, i, d_stim, d_spk):
-    (N,T) = binned_spikes.shape # N is number of neurons, T is number of time bins
-    (M,T) = flat_stimulus.shape # M is the size of a stimulus
-    Xdsn = np.empty((T-d_stim+1,M*d_stim+N*d_spk))
-    d_max = max(d_stim,d_spk)
-    y = np.empty((T-d_max,))
-    for t in range(T-d_max+1):
-        y[t] = binned_spikes[i,t+d_max-1]
-        X_dsn[t,:M*d_stim] = flat_stimulus[:,t+d_max-d_stim:t+d_max].reshape((1,-1))
-        X_dsn[t,M*d_stim:] = binned_spikes[:,t+d_max-d_spk:t+d_max].reshape((1,-1))
-    return (y, X_dsn)    
-    
-
-    
 # Inputs:
 # data_set: EphysObservatory data_set structure
 # bin_len: duration of a bin in seconds
@@ -82,13 +62,30 @@ def bin_spikes(data_set,bin_len,t_start,t_final,probes=None,regions=None):
     i = 0
     for z,cell in cell_table.iterrows(): 
         for spike_time in data_set.spike_times[cell['probe']][cell['unit_id']]:
-            t = int(np.floor(spike_time/bin_len))
+            t = int(np.floor((spike_time-t_start)/bin_len))
             if (t >=0) & (t<T):
                 binned_spikes[i,t] += 1
         i+=1    
     return (binned_spikes, cell_table)
 
-    
+
+# Inputs
+# flat_stimulus: M x T matrix of stimuli
+# binned_spikes: N x T matrix of spike counts
+# i: index of the neuron we're constructing the matrix for
+# d_stim: duration of stimulus filter (# time bins)
+# d_spk: duration of spike filters (# time bins)
+def construct_GLM_mat(flat_stimulus, binned_spikes, i, d_stim, d_spk):
+    (N,T) = binned_spikes.shape # N is number of neurons, T is number of time bins
+    (M,T) = flat_stimulus.shape # M is the size of a stimulus
+    X_dsn = np.empty((T-d_stim+1,M*d_stim+N*d_spk))
+    d_max = max(d_stim,d_spk)
+    y = np.empty((T-d_max+1,))
+    for t in range(T-d_max+1):
+        y[t] = binned_spikes[i,t+d_max-1]
+        X_dsn[t,:M*d_stim] = flat_stimulus[:,t+d_max-d_stim:t+d_max].reshape((1,-1))
+        X_dsn[t,M*d_stim:] = binned_spikes[:,t+d_max-d_spk:t+d_max].reshape((1,-1))
+    return (y, X_dsn)   
 
 
 
