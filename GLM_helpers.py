@@ -1,4 +1,6 @@
 import statsmodels.api as sm
+import numpy as np
+import pandas as pd
 
 # Inputs:
 # stimulus: video shown to the mouse in some form
@@ -10,21 +12,47 @@ import statsmodels.api as sm
 # Returns:
 # GLM network model with parameters fit
 
-def GLM_network_fit(stimulus,spikes,link='log',priors=None,L1=None):
+def GLM_network_fit(stimulus,spikes,d_stim, d_spk,link='log',priors=None,L1=None):
     # flatten stimulus and spikes into design matrix and observation matrix
-    Xdsn, y = construct_GLM_mats(stimulus,spikes)
+    N = spikes.shape[0]
+    M = stimulus.shape[0]
+    K = np.empty((N,M,d_stim)) # stimulus filters
+    W = np.empty((N,N,d_spk))  # spike train filters
     
-    # construct GLM model and return fit
     links = {'log':sm.genmod.families.links.log, 'logit':sm.genmod.families.links.logit}
+    for i in range(N):
+        Xdsn, y = construct_GLM_mats(stimulus,spikes,i, d_stim, d_spk)
+
+        # construct GLM model and return fit
+        if priors is None and L1 is None:
+            glm_pois = sm.GLM(sm.add_constant(y), sm.add_constant(Xdsn), family=sm.families.Poisson(link=links[link]))
+            p = glm_pois.fit().params
+            K[i,:,:] = p[:M*d_stim].reshape((M,d_stim))
+            W[i,:,:] = p[M*d_stim:].reshape((N,d_spk))
+            
+    return (K,W)
+
+
+
+# Inputs
+# flat_stimulus: M x T matrix of stimuli
+# binned_spikes: N x T matrix of spike counts
+# i: index of the neuron we're constructing the matrix for
+# d_stim: duration of stimulus filter (# time bins)
+# d_spk: duration of spike filters (# time bins)
+def construct_GLM_mat(flat_stimulus, binned_spikes, i, d_stim, d_spk):
+    (N,T) = binned_spikes.shape # N is number of neurons, T is number of time bins
+    (M,T) = flat_stimulus.shape # M is the size of a stimulus
+    Xdsn = np.empty((T-d_stim+1,M*d_stim+N*d_spk))
+    d_max = max(d_stim,d_spk)
+    y = np.empty((T-d_max,))
+    for t in range(T-d_max+1):
+        y[t] = binned_spikes[i,t+d_max-1]
+        X_dsn[t,:M*d_stim] = flat_stimulus[:,t+d_max-d_stim:t+d_max].reshape((1,-1))
+        X_dsn[t,M*d_stim:] = binned_spikes[:,t+d_max-d_spk:t+d_max].reshape((1,-1))
+    return (y, X_dsn)    
     
-    if priors is None and L1 is None:
-        glm_pois = sm.GLM(sm.add_constant(y), sm.add_constant(Xdsn), family=sm.families.Poisson(link=links[link]))
-        return glm_pois.fit()
-    else:
-        return None
-    
-    
-def construct_GLM_mats(flat_stimulus, binned_spikes):
+
     
 # Inputs:
 # data_set: EphysObservatory data_set structure
