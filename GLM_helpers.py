@@ -13,7 +13,6 @@ import pandas as pd
 # GLM network model with parameters fit
 
 def GLM_network_fit(stimulus,spikes,d_stim, d_spk,link='log',priors=None,L1=None):
-    # flatten stimulus and spikes into design matrix and observation matrix
     N = spikes.shape[0]
     M = stimulus.shape[0]
     K = np.empty((N,M,d_stim)) # stimulus filters
@@ -21,7 +20,7 @@ def GLM_network_fit(stimulus,spikes,d_stim, d_spk,link='log',priors=None,L1=None
     
     links = {'log':sm.genmod.families.links.log, 'logit':sm.genmod.families.links.logit}
     for i in range(N):
-        Xdsn, y = construct_GLM_mats(stimulus,spikes,i, d_stim, d_spk)
+        Xdsn, y = construct_GLM_mat(stimulus,spikes,i, d_stim, d_spk)
 
         # construct GLM model and return fit
         if priors is None and L1 is None:

@@ -23,3 +23,9 @@ def downsample_images(images, x_frac, y_frac):
         downsampled_image_list.append(downsample(images[idx,0:current_image_size_x-rem0,0:current_image_size_y-rem1], new_image_size))
     
     return(downsampled_image_list)
+
+def flatten_images(imgs):
+    flattened_image_list = []
+    for idx in np.arange(imgs.shape[0]):
+        flattened_image_list.append(np.ndarray.flatten(imgs[idx]))
+    return(flattened_image_list)        

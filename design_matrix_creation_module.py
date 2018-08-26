@@ -16,4 +16,4 @@ def get_sampled_stimulus_time_array(stim_table, sampling_time, flattened_image_l
     for idx, time_point in enumerate(time_array):
         stim_index = get_frame_at_time(time_point, stim_table)
         stim_array.append(flattened_image_list[int(stim_index)])
-    return(stim_array)
+        return(stim_array, time_array)
