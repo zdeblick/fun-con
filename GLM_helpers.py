@@ -20,17 +20,18 @@ def GLM_network_fit(stimulus,spikes,d_stim, d_spk,link='log',priors=None,L1=None
     
     links = {'log':sm.genmod.families.links.log, 'logit':sm.genmod.families.links.logit}
     for i in range(N):
-        Xdsn, y = construct_GLM_mat(stimulus,spikes,i, d_stim, d_spk)
-
+        print(i)
+        [y, Xdsn] = construct_GLM_mat(stimulus,spikes,i, d_stim, d_spk)
+        y = y.reshape((-1,1))
         # construct GLM model and return fit
         if priors is None and L1 is None:
-            glm_pois = sm.GLM(sm.add_constant(y), sm.add_constant(Xdsn), family=sm.families.Poisson(link=links[link]))
-            p = glm_pois.fit().params
+            glm_pois = sm.GLM(y, Xdsn, family=sm.families.Poisson(link=links[link]))
+            gfit = glm_pois.fit()
+            p = gfit.params
             K[i,:,:] = p[:M*d_stim].reshape((M,d_stim))
             W[i,:,:] = p[M*d_stim:].reshape((N,d_spk))
-            
-    return (K,W)
 
+    return (K,W)
 
 
 # Inputs:
