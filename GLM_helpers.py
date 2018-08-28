@@ -20,7 +20,6 @@ def GLM_network_fit(stimulus,spikes,d_stim, d_spk,link='log',priors=None,L1=None
     
     links = {'log':sm.genmod.families.links.log, 'logit':sm.genmod.families.links.logit}
     for i in range(N):
-        print(i)
         [y, Xdsn] = construct_GLM_mat(stimulus,spikes,i, d_stim, d_spk)
         y = y.reshape((-1,1))
         # construct GLM model and return fit
