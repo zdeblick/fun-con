@@ -23,20 +23,19 @@ from keras.layers import Dense, Lambda
 def GLM_network_fit(stimulus,spikes,d_stim, d_spk,bin_len,f='exp',priors=None,L1=None):
     N = spikes.shape[0]
     M = stimulus.shape[0]
-    K = np.empty((N,M,d_stim)) # stimulus filters
+    F = np.empty((N,M,d_stim)) # stimulus filters
     W = np.empty((N,N,d_spk))  # spike train filters
     b = np.empty((N,)) # biases
     fs = {'exp':K.exp}
+    Xdsn = construct_GLM_mat(stimulus,spikes,i, d_stim, d_spk)
     for i in range(N):
-        [y, Xdsn] = construct_GLM_mat(stimulus,spikes,i, d_stim, d_spk)
-        print np.sum(y), np.sum(np.sum(Xdsn))
-        y = y.reshape((-1,1))
+        y = spikes[i,max(d_stim,d_spk):]
         # construct GLM model and return fit
         model = Sequential()
         model.add(Dense(1,input_dim = Xdsn.shape[1],use_bias=True))
         model.add(Lambda(lambda x: fs[f](x)*bin_len))
         model.compile(loss = 'poisson',optimizer = keras.optimizers.adam(lr=2e-1))
-        model.fit(x=Xdsn,y=y,epochs=150,batch_size = 1000000)
+        model.fit(x=Xdsn,y=y,epochs=150,batch_size = 1000000,verbose=0)
         p = model.get_weights()[0]
         F[i,:,:] = p[:M*d_stim].reshape((M,d_stim))
         W[i,:,:] = p[M*d_stim:].reshape((N,d_spk))
@@ -90,12 +89,10 @@ def construct_GLM_mat(flat_stimulus, binned_spikes, i, d_stim, d_spk):
     (M,T) = flat_stimulus.shape # M is the size of a stimulus
     X_dsn = np.empty((T-d_stim,M*d_stim+N*d_spk))
     d_max = max(d_stim,d_spk)
-    y = np.empty((T-d_max,))
     for t in range(T-d_max):
-        y[t] = binned_spikes[i,t+d_max]
         X_dsn[t,:M*d_stim] = np.fliplr(flat_stimulus[:,t+d_max-d_stim:t+d_max]).reshape((1,-1))  #stimulus inputs
         X_dsn[t,M*d_stim:] = np.fliplr(binned_spikes[:,t+d_max-d_spk:t+d_max]).reshape((1,-1)) #spike inputs
-    return (y, X_dsn)      
+    return X_dsn    
 
 
 
