@@ -27,7 +27,7 @@ def GLM_network_fit(stimulus,spikes,d_stim, d_spk,bin_len,f='exp',priors=None,L1
     W = np.empty((N,N,d_spk))  # spike train filters
     b = np.empty((N,)) # biases
     fs = {'exp':K.exp}
-    Xdsn = construct_GLM_mat(stimulus,spikes,i, d_stim, d_spk)
+    Xdsn = construct_GLM_mat(stimulus,spikes, d_stim, d_spk)
     for i in range(N):
         y = spikes[i,max(d_stim,d_spk):]
         # construct GLM model and return fit
@@ -81,10 +81,9 @@ def bin_spikes(data_set,bin_len,t_start,t_final,probes=None,regions=None):
 # Inputs
 # flat_stimulus: M x T matrix of stimuli
 # binned_spikes: N x T matrix of spike counts
-# i: index of the neuron we're constructing the matrix for
 # d_stim: duration of stimulus filter (# time bins)
 # d_spk: duration of spike filters (# time bins)
-def construct_GLM_mat(flat_stimulus, binned_spikes, i, d_stim, d_spk):
+def construct_GLM_mat(flat_stimulus, binned_spikes, d_stim, d_spk):
     (N,T) = binned_spikes.shape # N is number of neurons, T is number of time bins
     (M,T) = flat_stimulus.shape # M is the size of a stimulus
     X_dsn = np.empty((T-d_stim,M*d_stim+N*d_spk))
@@ -96,19 +95,4 @@ def construct_GLM_mat(flat_stimulus, binned_spikes, i, d_stim, d_spk):
 
 
 
-class SparseGroupLasso(Regularizer):
-    """Regularizer for group lasso regularization.
-    # Arguments
-       l1: Float; L1 regularization factor.
-       l2: Float; L2 group regularization factor.
-   """
-
-    def __init__(self, size_stim, d_spike, lgroup = 1.):
-        self.lgroup = K.cast_to_floatx(lgroup)
-        self.d_spike = d_spike
-        self.size_stim = size_stim
-
-    def __call__(self, x): 
-        xr = K.reshape(x[self.size_stim:], (-1, self.d_spike))
-        return(self.lgroup * np.sqrt(K.int_shape(xr)[1])*K.sum(K.sqrt(K.sum(K.square(xr),axis=1))))
-
+    
