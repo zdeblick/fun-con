@@ -99,4 +99,19 @@ def construct_GLM_mat(flat_stimulus, binned_spikes, i, d_stim, d_spk):
 
 
 
-    
+class SparseGroupLasso(Regularizer):
+    """Regularizer for group lasso regularization.
+    # Arguments
+       l1: Float; L1 regularization factor.
+       l2: Float; L2 group regularization factor.
+   """
+
+    def __init__(self, size_stim, d_spike, lgroup = 1.):
+        self.lgroup = K.cast_to_floatx(lgroup)
+        self.d_spike = d_spike
+        self.size_stim = size_stim
+
+    def __call__(self, x): 
+        xr = K.reshape(x[self.size_stim:], (-1, self.d_spike))
+        return(self.lgroup * np.sqrt(K.int_shape(xr)[1])*K.sum(K.sqrt(K.sum(K.square(xr),axis=1))))
+
