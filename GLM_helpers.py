@@ -9,10 +9,10 @@ from keras import Sequential
 from keras.layers import Dense, Lambda
 
 # Inputs:
-# stimulus: video shown to the mouse in some form
-# spikes: spikes recorded from each neuron in some form
+# stimulus: video shown to the mouse in some form (M pixels x T time points)
+# spikes: spikes recorded from each neuron in some form (N neurons x T time points)
 # d_stim: length of stimulus filters in samples
-# d_stim: length of spike filters in samples
+# d_spk: length of spike filters in samples
 # f: string for the firing rate function used. options are {'exp'}
 # priors: TODO
 # L1: regularization parameter for sparse synapses TODO
